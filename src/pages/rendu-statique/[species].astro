@@ -1,0 +1,41 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../components/ui/ChoixValeurs.astro";
+import GraphiqueEspece from "../../components/GraphiqueEspece.astro";
+import penguins from "../../data/penguins.json";
+
+// Appelée au build : une page HTML est produite pour chaque espèce.
+export function getStaticPaths() {
+  const especes = [...new Set(penguins.map((d) => d.species))];
+  return especes.map((species) => ({ params: { species } }));
+}
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const { species } = Astro.params;
+
+const items = especes.map((e) => ({
+  href: `/rendu-statique/${e}`,
+  label: e,
+  actif: e === species,
+}));
+---
+
+<Layout title={`${species} · Rendu statique`}>
+  <PageHeader surtitre="Manchots · Rendu statique" titre={species}>
+    <ModeSwitch dataset="manchots" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer d'espèce" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueEspece species={species} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/rendu-statique" class="lien-fleche">Retour à la liste des espèces</a>
+  </p>
+</Layout>

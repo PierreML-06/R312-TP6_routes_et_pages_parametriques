@@ -1,0 +1,80 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import diamants from "../data/diamonds.json";
+
+/* Props : valeur — taille (cut) brute, ex. "Very Good" (absente : tout le jeu) ; compact — version mini (accueil). */
+const { valeur, compact = false } = Astro.props;
+
+const somme = (v) => v.reduce((a, b) => a + b, 0);
+const mediane = (v) => {
+  const t = [...v].sort((a, b) => a - b);
+  const m = Math.floor(t.length / 2);
+  return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2;
+};
+const euros = (n) => `${Math.round(n).toLocaleString("fr-FR")} $`;
+
+const data = valeur ? diamants.filter((d) => d.cut === valeur) : diamants;
+
+/* Ordres fixes : qualité croissante pour les tailles, D à J pour les couleurs. */
+const ordreCut = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+const couleursLettres = [...new Set(diamants.map((d) => d.color))].sort();
+const palette = ["#0f766e", "#14b8a6", "#5eead4", "#d97706", "#f59e0b", "#a8a29e", "#57534e"];
+
+/* Domaine y fixe : plus grand prix médian, toutes combinaisons taille × couleur confondues. */
+const maxMediane = Math.max(
+  ...ordreCut.flatMap((c) =>
+    couleursLettres.map((l) => {
+      const prix = diamants.filter((d) => d.cut === c && d.color === l).map((d) => d.price);
+      return prix.length ? mediane(prix) : 0;
+    })
+  )
+);
+const domaineY = [0, Math.ceil(maxMediane / 1000) * 1000 + 500];
+
+const stats = [
+  { label: "Effectif", valeur: `${data.length.toLocaleString("fr-FR")} diamants` },
+  { label: "Prix médian", valeur: euros(mediane(data.map((d) => d.price))) },
+  { label: "Carat moyen", valeur: (somme(data.map((d) => d.carat)) / data.length).toFixed(2) },
+];
+
+/* Des agrégats seulement : jamais un point par diamant (54 000 éléments SVG). */
+const x = valeur ? "color" : "cut";
+const options = {
+  ariaLabel: valeur ? `Prix médian par couleur des diamants de taille ${valeur}` : "Prix médian des diamants par taille",
+  marginTop: compact ? 6 : 24,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 56,
+  marginBottom: compact ? 6 : 44,
+  height: compact ? 120 : 380,
+  color: valeur
+    ? { domain: couleursLettres, range: palette }
+    : { domain: ordreCut, range: ["#a8a29e", "#5eead4", "#14b8a6", "#0f766e", "#d97706"] },
+  x: { domain: valeur ? couleursLettres : ordreCut, label: valeur ? "Couleur (D = la meilleure) →" : "Taille →", axis: compact ? null : "bottom" },
+  y: { domain: domaineY, label: "↑ Prix médian ($)", axis: compact ? null : "left", grid: !compact },
+  marks: [
+    /* groupX regroupe par catégorie et calcule la médiane des prix. */
+    Plot.barY(data, Plot.groupX({ y: "median" }, { x, y: "price", fill: x })),
+    compact
+      ? null
+      : Plot.text(data, Plot.groupX({ y: "median", text: "median" }, { x, y: "price", text: "price", dy: -8, fontSize: 11 })),
+    Plot.ruleY([0]),
+  ],
+};
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-3">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

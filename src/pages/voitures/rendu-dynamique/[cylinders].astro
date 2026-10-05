@@ -1,0 +1,42 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueCylindres from "../../../components/GraphiqueCylindres.astro";
+import cars from "../../../data/cars.json";
+
+const { cylinders } = Astro.params;
+const cylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+
+// Valeur absente de la liste : on répond directement 404.
+if (!cylindres.some((n) => String(n) === cylinders)) {
+  return new Response("Nombre de cylindres inconnu", { status: 404 });
+}
+
+const items = cylindres.map((n) => ({
+  href: `/voitures/rendu-dynamique/${n}`,
+  label: `${n} cylindres`,
+  actif: String(n) === cylinders,
+}));
+---
+
+<Layout title={`${cylinders} cylindres · Rendu dynamique`}>
+  <PageHeader surtitre="Voitures · Rendu dynamique" titre={`${cylinders} cylindres`}>
+    <ModeSwitch dataset="voitures" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer de nombre de cylindres" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueCylindres cylinders={cylinders} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/voitures/rendu-dynamique" class="lien-fleche">Retour à la liste des cylindres</a>
+  </p>
+</Layout>

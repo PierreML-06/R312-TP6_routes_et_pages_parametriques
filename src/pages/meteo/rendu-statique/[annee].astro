@@ -1,0 +1,46 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueMeteo from "../../../components/GraphiqueMeteo.astro";
+import meteo from "../../../data/seattle-weather.json";
+
+// Appelée au build : une page HTML est produite pour chaque année.
+export function getStaticPaths() {
+  const annees = [...new Set(meteo.map((d) => d.date.slice(0, 4)))].sort();
+  return annees.map((a) => ({ params: { annee: a } }));
+}
+
+const { annee } = Astro.params;
+const annees = [...new Set(meteo.map((d) => d.date.slice(0, 4)))].sort();
+
+// Valeur absente de la liste : on répond directement 404.
+if (!annees.includes(annee)) {
+  return new Response("Année inconnue", { status: 404 });
+}
+
+const items = annees.map((a) => ({
+  href: `/meteo/rendu-statique/${a}`,
+  label: a,
+  actif: a === annee,
+}));
+---
+
+<Layout title={`${annee} · Rendu statique`}>
+  <PageHeader surtitre="Météo · Rendu statique" titre={annee}>
+    <ModeSwitch dataset="meteo" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer d'année" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueMeteo valeur={annee} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/meteo/rendu-statique" class="lien-fleche">Retour à la liste des années</a>
+  </p>
+</Layout>

@@ -1,0 +1,56 @@
+---
+/* Props : titre, ton ("info" par défaut | "code"). */
+const { titre, ton = "info" } = Astro.props;
+const estCode = ton === "code";
+---
+
+<aside
+  class:list={[
+    "encart rounded-xl border p-5 sm:p-6",
+    estCode ? "border-stone-800 bg-stone-900 text-stone-300" : "border-teal-100 bg-teal-50 text-stone-700",
+  ]}
+>
+  <p
+    class:list={[
+      "mb-2 text-xs font-medium uppercase tracking-widest",
+      estCode ? "text-teal-300" : "text-teal-700",
+    ]}
+  >
+    {titre}
+  </p>
+  <div class="encart-contenu space-y-3 text-sm leading-relaxed">
+    <slot />
+  </div>
+</aside>
+
+<style is:global>
+  .encart pre {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    padding: 0.875rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    background: #1c1917;
+    color: #e7e5e4;
+  }
+  .encart pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .encart code:not(pre code) {
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: rgb(255 255 255 / 0.6);
+  }
+  .encart.bg-stone-900 code:not(pre code) {
+    background: rgb(255 255 255 / 0.1);
+    color: #f5f5f4;
+  }
+  .encart strong {
+    font-weight: 600;
+  }
+</style>

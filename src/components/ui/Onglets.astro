@@ -1,0 +1,105 @@
+---
+/* Props : items ({ id, label, detail? }), label (aria-label du tablist).
+   Le slot contient des panneaux portant data-onglet="<id>". */
+const { items, label } = Astro.props;
+---
+
+<div data-onglets data-ids={items.map((i) => i.id).join(",")}>
+  <div
+    role="tablist"
+    aria-label={label}
+    class="-mx-4 mb-6 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+  >
+    <div class="inline-flex gap-1 rounded-xl border border-stone-200 bg-stone-100/70 p-1">
+      {
+        items.map((item) => (
+          <button
+            type="button"
+            role="tab"
+            data-tab={item.id}
+            class="flex items-baseline gap-2 whitespace-nowrap rounded-lg border border-transparent px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:text-stone-900 aria-selected:border-stone-200 aria-selected:bg-white aria-selected:text-teal-700 aria-selected:shadow-douce"
+          >
+            {item.label}
+            {item.detail && <span class="text-xs font-normal text-stone-500">{item.detail}</span>}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+  <div data-panneaux><slot /></div>
+</div>
+
+<style is:global>
+  [data-onglet].onglet-apparition {
+    animation: onglet-entree 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes onglet-entree {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-onglet].onglet-apparition {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  // Plusieurs instances possibles par page : chaque [data-onglets] est autonome.
+  document.querySelectorAll<HTMLElement>("[data-onglets]").forEach((racine, n) => {
+    const boutons = Array.from(racine.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panneaux = Array.from(racine.querySelectorAll<HTMLElement>("[data-onglet]"));
+    if (boutons.length === 0) return;
+
+    const idPanneau = (id: string) => `onglet-${n}-${id}-panneau`;
+    const idBouton = (id: string) => `onglet-${n}-${id}-bouton`;
+
+    boutons.forEach((b) => {
+      const id = b.dataset.tab!;
+      b.id = idBouton(id);
+      b.setAttribute("aria-controls", idPanneau(id));
+    });
+    panneaux.forEach((p) => {
+      const id = p.dataset.onglet!;
+      p.setAttribute("role", "tabpanel");
+      p.id = idPanneau(id);
+      p.setAttribute("aria-labelledby", idBouton(id));
+    });
+
+    function activer(id: string, majHash: boolean, focus = false) {
+      boutons.forEach((b) => {
+        const actif = b.dataset.tab === id;
+        b.setAttribute("aria-selected", String(actif));
+        b.tabIndex = actif ? 0 : -1;
+        if (actif && focus) b.focus();
+      });
+      panneaux.forEach((p) => {
+        const actif = p.dataset.onglet === id;
+        p.hidden = !actif;
+        p.classList.toggle("onglet-apparition", actif);
+      });
+      if (majHash) history.replaceState(null, "", "#" + id);
+    }
+
+    const ids = boutons.map((b) => b.dataset.tab!);
+    const hash = decodeURIComponent(location.hash.slice(1));
+    activer(ids.includes(hash) ? hash : ids[0], false);
+
+    boutons.forEach((b, i) => {
+      b.addEventListener("click", () => activer(b.dataset.tab!, true));
+      b.addEventListener("keydown", (e) => {
+        let cible = -1;
+        if (e.key === "ArrowRight") cible = (i + 1) % boutons.length;
+        else if (e.key === "ArrowLeft") cible = (i - 1 + boutons.length) % boutons.length;
+        else if (e.key === "Home") cible = 0;
+        else if (e.key === "End") cible = boutons.length - 1;
+        if (cible >= 0) {
+          e.preventDefault();
+          activer(ids[cible], true, true);
+        }
+      });
+    });
+  });
+</script>

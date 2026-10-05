@@ -1,0 +1,34 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import diamants from "../../../data/diamonds.json";
+
+const ordre = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+const valeurs = [...new Set(diamants.map((d) => d.cut))].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+const items = valeurs.map((v) => ({
+  href: `/diamants/rendu-dynamique/${slug(v)}`,
+  label: ((v) => v)(v),
+  detail: `${diamants.filter((d) => d.cut === v).length} diamants`,
+}));
+---
+
+<Layout title="Rendu dynamique · Diamants">
+  <PageHeader surtitre="Diamants · Rendu dynamique" titre="Rendu dynamique" intro="Ces pages ne sont pas générées au build : le serveur produit le HTML à chaque requête, à partir du slug lu dans l'URL.">
+    <ModeSwitch dataset="diamants" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une taille" />
+
+  <div class="mt-12">
+    <Encart titre="Page rendue à la demande" ton="info">
+      <p>Avec prerender = false, Astro calcule la page à chaque visite et lit le slug avec Astro.params. On retrouve ensuite la valeur d'origine en comparant les slugs.</p>
+      <pre><code>{"export const prerender = false;\nconst { cut } = Astro.params;"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

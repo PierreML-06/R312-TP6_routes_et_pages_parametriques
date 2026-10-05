@@ -1,0 +1,41 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../components/ui/ChoixValeurs.astro";
+import GraphiqueEspece from "../../components/GraphiqueEspece.astro";
+import penguins from "../../data/penguins.json";
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const { species } = Astro.params;
+
+// Espèce absente de la liste : on répond directement 404.
+if (!especes.includes(species)) {
+  return new Response("Espèce inconnue", { status: 404 });
+}
+const items = especes.map((e) => ({
+  href: `/rendu-dynamique/${e}`,
+  label: e,
+  actif: e === species,
+}));
+---
+
+<Layout title={`${species} · Rendu dynamique`}>
+  <PageHeader surtitre="Manchots · Rendu dynamique" titre={species}>
+    <ModeSwitch dataset="manchots" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer d'espèce" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueEspece species={species} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/rendu-dynamique" class="lien-fleche">Retour à la liste des espèces</a>
+  </p>
+</Layout>

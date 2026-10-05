@@ -1,0 +1,108 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import meteo from "../data/seattle-weather.json";
+
+/* Props : valeur — année (ex. "2014"), absente = aperçu de tout le jeu ; compact — version mini (accueil). */
+const { valeur, compact = false } = Astro.props;
+
+const moyenne = (valeurs) => valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+const mois = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+/* On ajoute à chaque jour l'année, le mois (libellé) et le jour du mois. */
+const jours = meteo.map((d) => ({
+  ...d,
+  annee: d.date.slice(0, 4),
+  mois: mois[Number(d.date.slice(5, 7)) - 1],
+  jour: Number(d.date.slice(8, 10)),
+}));
+const annees = [...new Set(jours.map((d) => d.annee))].sort();
+
+/* Domaine de couleur FIXE sur tout le jeu : les années restent comparables. */
+const domaineCouleur = [Math.floor(Math.min(...jours.map((d) => d.temp_max))), Math.ceil(Math.max(...jours.map((d) => d.temp_max)))];
+
+const apercu = valeur === undefined;
+const data = apercu ? jours : jours.filter((d) => d.annee === String(valeur));
+
+const plusChaud = data.reduce((a, b) => (b.temp_max > a.temp_max ? b : a), data[0]);
+const stats = [
+  { label: "Temp. max moyenne", valeur: `${moyenne(data.map((d) => d.temp_max)).toFixed(1)} °C` },
+  { label: "Jour le plus chaud", valeur: `${plusChaud.date} (${plusChaud.temp_max} °C)` },
+  { label: "Jours de pluie", valeur: `${data.filter((d) => d.weather === "rain").length} jours` },
+  { label: "Précipitations", valeur: `${Math.round(data.reduce((s, d) => s + d.precipitation, 0))} mm` },
+];
+
+const couleur = {
+  scheme: "RdYlBu",
+  reverse: true,
+  domain: domaineCouleur,
+};
+
+/* Légende maison : la légende de Plot dessine un dégradé via <canvas>, indisponible sous JSDOM.
+   On reproduit donc la rampe RdYlBu inversée avec un simple dégradé CSS. */
+const degrade = "linear-gradient(to right, #4575b4, #91bfdb, #e0f3f8, #ffffbf, #fee090, #fc8d59, #d73027)";
+
+const options = apercu
+  ? {
+      ariaLabel: "Carte de chaleur de la température maximale moyenne par mois et par année",
+      marginTop: compact ? 4 : 16,
+      marginRight: compact ? 4 : 16,
+      marginLeft: compact ? 4 : 56,
+      marginBottom: compact ? 4 : 40,
+      height: compact ? 120 : 260,
+      color: couleur,
+      x: { domain: mois, label: null, axis: compact ? null : "bottom" },
+      y: { domain: annees, label: null, axis: compact ? null : "left" },
+      marks: [
+        Plot.cell(jours, Plot.group({ fill: "mean" }, { x: "mois", y: "annee", fill: "temp_max", inset: 0.5 })),
+      ],
+    }
+  : {
+      ariaLabel: `Carte de chaleur calendaire des températures maximales en ${valeur}`,
+      marginTop: 16,
+      marginRight: 16,
+      marginLeft: 56,
+      marginBottom: 40,
+      height: 380,
+      color: couleur,
+      x: { domain: Array.from({ length: 31 }, (_, i) => i + 1), label: "Jour du mois →" },
+      y: { domain: mois, label: null },
+      marks: [
+        Plot.cell(data, {
+          x: "jour",
+          y: "mois",
+          fill: "temp_max",
+          inset: 0.5,
+          title: (d) => `${d.date} : ${d.temp_max} °C, ${d.weather}`,
+        }),
+      ],
+    };
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <div class="mt-3 max-w-xs">
+        <p class="text-xs text-stone-500">Température max (°C)</p>
+        <div class="mt-1 h-3 rounded" style={`background: ${degrade}`} />
+        <div class="mt-1 flex justify-between text-xs text-stone-500">
+          <span>{domaineCouleur[0]}</span>
+          <span>{domaineCouleur[1]}</span>
+        </div>
+      </div>
+    )
+  }
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

@@ -1,0 +1,30 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../components/ui/ChoixValeurs.astro";
+import Encart from "../../components/ui/Encart.astro";
+import penguins from "../../data/penguins.json";
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const items = especes.map((e) => ({
+  href: `/rendu-statique/${e}`,
+  label: e,
+  detail: `${penguins.filter((d) => d.species === e).length} manchots`,
+}));
+---
+
+<Layout title="Rendu statique · Manchots">
+  <PageHeader surtitre="Manchots · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées une fois pour toutes au build : getStaticPaths() liste les espèces et Astro produit un fichier HTML par espèce.">
+    <ModeSwitch dataset="manchots" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une espèce" />
+
+  <div class="mt-12">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des valeurs du paramètre ; une page est créée pour chacune.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return especes.map((species) => ({ params: { species } }));\n}"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

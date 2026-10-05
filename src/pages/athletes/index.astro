@@ -1,0 +1,51 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueAthletes from "../../components/GraphiqueAthletes.astro";
+import athletes from "../../data/athletes.json";
+
+const valeurs = [...new Set(athletes.map((d) => d.sport))].sort();
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+const items = valeurs.map((v) => ({ id: `sport-${slug(v)}`, label: ((v) => v.charAt(0).toUpperCase() + v.slice(1))(v) }));
+---
+
+<Layout title="Athlètes · Onglets" description="Répartition des tailles des athlètes de chaque sport, femmes et hommes.">
+  <PageHeader
+    surtitre="Athlètes · Onglets"
+    titre="Les athlètes, selon leur sport"
+    intro="Répartition des tailles des athlètes de chaque sport, femmes et hommes. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="athletes" />
+  </PageHeader>
+
+  <Onglets items={items} label="Sport">
+    {
+      valeurs.map((v) => (
+        <div data-onglet={`sport-${slug(v)}`}>
+          <div class="carte">
+            <GraphiqueAthletes valeur={v} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12 grid gap-6 lg:grid-cols-2">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        La liste des sports est calculée avec <code class="code-inline">[...new Set(athletes.map((d) => d.sport))]</code> :
+        <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons, puis
+        <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
+        Plusieurs sports contiennent des espaces (« table tennis ») : l'URL utilise un slug (<code class="code-inline">table-tennis</code>) et les identifiants d'onglets n'ont jamais d'espace.
+      </p>
+    </Encart>
+    <Encart titre="La marque Plot utilisée" ton="info">
+      <p>
+        La marque <code class="code-inline">Plot.rectY</code> dessine des rectangles verticaux ; associée à <code class="code-inline">Plot.binX</code>, elle range les tailles en classes de 5 cm et compte les athlètes de chaque classe, empilés par sexe (<code class="code-inline">fill: "sex"</code>).
+      </p>
+    </Encart>
+  </div>
+</Layout>

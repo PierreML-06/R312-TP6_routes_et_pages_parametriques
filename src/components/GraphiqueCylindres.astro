@@ -1,0 +1,69 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import cars from "../data/cars.json";
+
+/* Props : cylinders — nombre de cylindres (nombre ou chaîne) ; compact — version mini (accueil). */
+const { cylinders, compact = false } = Astro.props;
+
+const moyenne = (valeurs) => valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+
+/* Valeurs nulles écartées : un point sans puissance ou sans consommation ne peut pas être placé. */
+const valides = cars.filter((d) => d["power (hp)"] != null && d["economy (mpg)"] != null);
+const data = valides.filter((d) => String(d.cylinders) === String(cylinders));
+
+/* Domaines x/y fixes calculés sur tout le dataset. */
+const domaineX = [0, Math.ceil(Math.max(...valides.map((d) => d["power (hp)"])) / 50) * 50];
+const domaineY = [0, Math.ceil(Math.max(...valides.map((d) => d["economy (mpg)"])) / 10) * 10];
+
+/* Domaine de couleur FIXE : un nombre de cylindres garde sa couleur partout. */
+const tousCylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+const palette = ["#a8a29e", "#14b8a6", "#d97706", "#0f766e", "#292524"];
+const couleurs = tousCylindres.map((_, i) => palette[i % palette.length]);
+
+const stats = [
+  { label: "Effectif", valeur: `${data.length} voitures` },
+  { label: "Puissance moy.", valeur: `${Math.round(moyenne(data.map((d) => d["power (hp)"])))} ch` },
+  { label: "Consommation moy.", valeur: `${moyenne(data.map((d) => d["economy (mpg)"])).toFixed(1)} mpg` },
+  { label: "Poids moyen", valeur: `${Math.round(moyenne(data.filter((d) => d["weight (lb)"] != null).map((d) => d["weight (lb)"])))} lb` },
+];
+
+const options = {
+  ariaLabel: `Nuage de points des voitures à ${cylinders} cylindres`,
+  marginTop: compact ? 6 : 16,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 48,
+  marginBottom: compact ? 6 : 44,
+  height: compact ? 120 : 380,
+  color: { domain: tousCylindres, range: couleurs },
+  x: { domain: domaineX, label: "Puissance (ch) →", axis: compact ? null : "bottom", grid: !compact },
+  y: { domain: domaineY, label: "↑ Consommation (mpg)", axis: compact ? null : "left", grid: !compact },
+  marks: [
+    Plot.dot(data, {
+      x: "power (hp)",
+      y: "economy (mpg)",
+      stroke: "cylinders",
+      fill: "cylinders",
+      fillOpacity: 0.15,
+      r: compact ? 2 : 3.5,
+      title: "name",
+    }),
+  ],
+};
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

@@ -1,0 +1,49 @@
+---
+import { trouverJeu } from "../../data/jeux.js";
+
+/* Prop : dataset = un slug de src/data/jeux.js (ex. "manchots", "marches"). */
+const { dataset } = Astro.props;
+const jeu = trouverJeu(dataset) ?? trouverJeu("manchots");
+
+const modes = [
+  { href: jeu.liens.onglets, label: "Onglets", detail: "Tout sur une page" },
+  { href: jeu.liens.dynamique, label: "Dynamique", detail: "Rendu à la demande (SSR)" },
+  { href: jeu.liens.statique, label: "Statique", detail: "Généré au build" },
+];
+
+const pathname = Astro.url.pathname;
+const p = pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
+/** Correspond si égal au pathname (slash final toléré) ou préfixe suivi de "/". */
+const correspond = (href: string) => p === href || p.startsWith(href + "/");
+// Actif = le plus long des href qui correspondent (« /voitures » ne capte pas ses sous-routes).
+const meilleur = modes
+  .filter((m) => correspond(m.href))
+  .sort((a, b) => b.href.length - a.href.length)[0];
+const actifs = modes.map((m) => m === meilleur);
+---
+
+<div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+  <nav
+    aria-label="Mode de présentation"
+    class="inline-flex gap-1 rounded-xl border border-stone-200 bg-stone-100/70 p-1"
+  >
+    {
+      modes.map((m, i) => (
+        <a
+          href={m.href}
+          title={m.detail}
+          aria-current={actifs[i] ? "page" : undefined}
+          class:list={[
+            "flex flex-col whitespace-nowrap rounded-lg px-4 py-2 transition-colors",
+            actifs[i]
+              ? "border border-stone-200 bg-white text-teal-700 shadow-douce"
+              : "border border-transparent text-stone-600 hover:text-stone-900",
+          ]}
+        >
+          <span class="text-sm font-medium">{m.label}</span>
+          <span class="text-xs text-stone-500">{m.detail}</span>
+        </a>
+      ))
+    }
+  </nav>
+</div>

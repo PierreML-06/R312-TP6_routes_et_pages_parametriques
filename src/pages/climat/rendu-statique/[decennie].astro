@@ -1,0 +1,46 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueClimat from "../../../components/GraphiqueClimat.astro";
+import climate from "../../../data/climate.json";
+
+// Appelée au build : une page HTML est produite pour chaque valeur.
+export function getStaticPaths() {
+  const valeurs = [...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b);
+  return valeurs.map((v) => ({ params: { decennie: String(v) } }));
+}
+
+const { decennie } = Astro.params;
+const valeurs = [...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b);
+
+// Valeur absente de la liste : on répond directement 404.
+if (!valeurs.some((v) => String(v) === decennie)) {
+  return new Response("Décennie inconnue", { status: 404 });
+}
+
+const items = valeurs.map((v) => ({
+  href: `/climat/rendu-statique/${v}`,
+  label: `Années ${v}`,
+  actif: String(v) === decennie,
+}));
+---
+
+<Layout title={`Années {decennie} · Rendu statique`}>
+  <PageHeader surtitre="Climat · Rendu statique" titre={`Années {decennie}`}>
+    <ModeSwitch dataset="climat" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer de décennie" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueClimat valeur={decennie} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/climat/rendu-statique" class="lien-fleche">Retour à la liste des décennies</a>
+  </p>
+</Layout>

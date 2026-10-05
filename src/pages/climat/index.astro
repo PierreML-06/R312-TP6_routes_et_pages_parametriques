@@ -1,0 +1,45 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueClimat from "../../components/GraphiqueClimat.astro";
+import climate from "../../data/climate.json";
+
+const valeurs = [...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b);
+const items = valeurs.map((v) => ({ id: `climat-${v}`, label: `Années ${v}` }));
+---
+
+<Layout title="Climat · Onglets" description="Écart de température mondiale à la moyenne, année par année. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible.">
+  <PageHeader
+    surtitre="Climat · Onglets"
+    titre="Le climat, décennie par décennie"
+    intro="Écart de température mondiale à la moyenne, année par année. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="climat" />
+  </PageHeader>
+
+  <Onglets items={items} label="Décennie">
+    {
+      valeurs.map((v) => (
+        <div data-onglet={`climat-${v}`}>
+          <div class="carte">
+            <GraphiqueClimat valeur={String(v)} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        La liste est calculée automatiquement à partir des données : <code class="code-inline">{"[...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b)"}</code>.
+        <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons, puis
+        <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
+      </p>
+      <p class="mt-3">Marque Plot utilisée : Plot.barY dessine une barre par année (x en bande) dont la hauteur est l'anomalie ; la couleur est bleue sous zéro, rouge au-dessus, et Plot.ruleY([0]) trace la référence.</p>
+    </Encart>
+  </div>
+</Layout>

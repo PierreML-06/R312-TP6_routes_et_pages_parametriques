@@ -1,0 +1,44 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueCylindres from "../../components/GraphiqueCylindres.astro";
+import cars from "../../data/cars.json";
+
+const cylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+const items = cylindres.map((n) => ({ id: `cyl-${n}`, label: `${n} cylindres` }));
+---
+
+<Layout title="Voitures · Onglets" description="Puissance et consommation des voitures selon le nombre de cylindres.">
+  <PageHeader
+    surtitre="Voitures · Onglets"
+    titre="Les voitures, selon leurs cylindres"
+    intro="Puissance et consommation de chaque modèle. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="voitures" />
+  </PageHeader>
+
+  <Onglets items={items} label="Nombre de cylindres">
+    {
+      cylindres.map((n) => (
+        <div data-onglet={`cyl-${n}`}>
+          <div class="carte">
+            <GraphiqueCylindres cylinders={n} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        Les valeurs de cylindres sont calculées avec <code class="code-inline">[...new Set(cars.map((d) => d.cylinders))]</code> :
+        <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons, puis
+        <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
+      </p>
+    </Encart>
+  </div>
+</Layout>

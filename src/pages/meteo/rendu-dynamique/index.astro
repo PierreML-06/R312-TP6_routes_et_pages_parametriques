@@ -1,0 +1,35 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import meteo from "../../../data/seattle-weather.json";
+
+const annees = [...new Set(meteo.map((d) => d.date.slice(0, 4)))].sort();
+const items = annees.map((a) => ({
+  href: `/meteo/rendu-dynamique/${a}`,
+  label: a,
+  detail: `${meteo.filter((d) => d.date.startsWith(a)).length} jours`,
+}));
+---
+
+<Layout title="Rendu dynamique · Météo">
+  <PageHeader surtitre="Météo · Rendu dynamique" titre="Rendu dynamique" intro="Ces pages ne sont pas générées au build : le serveur produit le HTML à chaque requête, à partir de l'année lue dans l'URL.">
+    <ModeSwitch dataset="meteo" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une année" />
+
+  <div class="mt-12 grid gap-6 md:grid-cols-2">
+    <Encart titre="Page rendue à la demande" ton="info">
+      <p>Avec prerender = false, Astro calcule la page à chaque visite et lit le paramètre avec Astro.params.</p>
+      <pre><code>{"export const prerender = false;\nconst { annee } = Astro.params;"}</code></pre>
+    </Encart>
+    <Encart titre="La marque Plot.cell" ton="info">
+      <p>Plot.cell dessine un rectangle par jour (x = jour du mois, y = mois), coloré selon la température maximale.</p>
+    </Encart>
+  </div>
+</Layout>

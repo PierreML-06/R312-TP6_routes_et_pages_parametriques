@@ -1,0 +1,58 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import climate from "../data/climate.json";
+
+/* Props : valeur — décennie (ex. "1880"), absente = toutes les années ; compact — version mini (accueil). */
+const { valeur, compact = false } = Astro.props;
+
+const data = valeur ? climate.filter((d) => Math.floor(d.year / 10) * 10 === Number(valeur)) : climate;
+
+/* Domaine y FIXE sur tout le jeu : les décennies restent comparables entre elles. */
+const anomalies = climate.map((d) => d.anomaly);
+const domaineY = [Math.floor(Math.min(...anomalies) * 5) / 5, Math.ceil(Math.max(...anomalies) * 5) / 5];
+
+const moyenne = data.reduce((a, d) => a + d.anomaly, 0) / data.length;
+const chaude = data.reduce((a, b) => (b.anomaly > a.anomaly ? b : a));
+const froide = data.reduce((a, b) => (b.anomaly < a.anomaly ? b : a));
+const signe = (v) => (v > 0 ? "+" : "") + v.toFixed(2);
+
+const stats = [
+  { label: "Moyenne", valeur: `${signe(moyenne)} °C` },
+  { label: "Année la plus chaude", valeur: `${chaude.year} (${signe(chaude.anomaly)} °C)` },
+  { label: "Année la plus froide", valeur: `${froide.year} (${signe(froide.anomaly)} °C)` },
+  { label: "Années", valeur: `${data.length}` },
+];
+
+const options = {
+  ariaLabel: valeur ? `Anomalies de température des années ${valeur}` : "Anomalies de température depuis 1880",
+  marginTop: compact ? 6 : 16,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 48,
+  marginBottom: compact ? 6 : 36,
+  height: compact ? 120 : 380,
+  x: { label: null, axis: compact ? null : "bottom", tickFormat: (d) => (valeur || d % 10 === 0 ? String(d) : "") },
+  y: { domain: domaineY, label: "↑ Anomalie (°C)", axis: compact ? null : "left", grid: !compact },
+  marks: [
+    // Bleu sous zéro, rouge au-dessus.
+    Plot.barY(data, { x: "year", y: "anomaly", fill: (d) => (d.anomaly > 0 ? "#dc2626" : "#2563eb"), title: (d) => `${d.year} : ${signe(d.anomaly)} °C` }),
+    Plot.ruleY([0]),
+  ],
+};
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

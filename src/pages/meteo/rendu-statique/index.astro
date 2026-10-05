@@ -1,0 +1,33 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import meteo from "../../../data/seattle-weather.json";
+
+const annees = [...new Set(meteo.map((d) => d.date.slice(0, 4)))].sort();
+const items = annees.map((a) => ({
+  href: `/meteo/rendu-statique/${a}`,
+  label: a,
+  detail: `${meteo.filter((d) => d.date.startsWith(a)).length} jours`,
+}));
+---
+
+<Layout title="Rendu statique · Météo">
+  <PageHeader surtitre="Météo · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées au build : getStaticPaths() liste les années et Astro produit un fichier HTML pour chacune.">
+    <ModeSwitch dataset="meteo" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une année" />
+
+  <div class="mt-12 grid gap-6 md:grid-cols-2">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des valeurs du paramètre ; une page est créée pour chacune.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return annees.map((a) => ({ params: { annee: a } }));\n}"}</code></pre>
+    </Encart>
+    <Encart titre="La marque Plot.cell" ton="info">
+      <p>Plot.cell dessine un rectangle par jour (x = jour du mois, y = mois), coloré selon la température maximale.</p>
+    </Encart>
+  </div>
+</Layout>

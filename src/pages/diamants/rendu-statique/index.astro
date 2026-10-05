@@ -1,0 +1,32 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import diamants from "../../../data/diamonds.json";
+
+const ordre = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+const valeurs = [...new Set(diamants.map((d) => d.cut))].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+const items = valeurs.map((v) => ({
+  href: `/diamants/rendu-statique/${slug(v)}`,
+  label: ((v) => v)(v),
+  detail: `${diamants.filter((d) => d.cut === v).length} diamants`,
+}));
+---
+
+<Layout title="Rendu statique · Diamants">
+  <PageHeader surtitre="Diamants · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées au build : getStaticPaths() liste les slugs et Astro produit un fichier HTML pour chacun.">
+    <ModeSwitch dataset="diamants" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une taille" />
+
+  <div class="mt-12">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des slugs ; une page est créée pour chacun.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return valeurs.map((v) => ({ params: { cut: slug(v) } }));\n}"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

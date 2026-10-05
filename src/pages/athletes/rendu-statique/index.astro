@@ -1,0 +1,31 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import athletes from "../../../data/athletes.json";
+
+const valeurs = [...new Set(athletes.map((d) => d.sport))].sort();
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+const items = valeurs.map((v) => ({
+  href: `/athletes/rendu-statique/${slug(v)}`,
+  label: ((v) => v.charAt(0).toUpperCase() + v.slice(1))(v),
+  detail: `${athletes.filter((d) => d.sport === v).length} athlètes`,
+}));
+---
+
+<Layout title="Rendu statique · Athlètes">
+  <PageHeader surtitre="Athlètes · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées au build : getStaticPaths() liste les slugs et Astro produit un fichier HTML pour chacun.">
+    <ModeSwitch dataset="athletes" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir un sport" />
+
+  <div class="mt-12">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des slugs ; une page est créée pour chacun.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return valeurs.map((v) => ({ params: { sport: slug(v) } }));\n}"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

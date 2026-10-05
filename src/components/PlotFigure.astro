@@ -1,0 +1,25 @@
+---
+import * as Plot from "@observablehq/plot";
+import { JSDOM } from "jsdom";
+
+/* Prop : options — objet d'options passé à Plot.plot. */
+const { options } = Astro.props;
+
+// Style commun : police héritée du site, fond transparent, texte en stone.
+const baseStyle = {
+  fontFamily: "inherit",
+  fontSize: "12px",
+  background: "transparent",
+  color: "#57534e",
+  overflow: "visible",
+};
+
+// Rendu côté serveur : Plot a besoin d'un document, fourni par jsdom.
+const plot = Plot.plot({
+  style: baseStyle,
+  ...options,
+  document: new JSDOM("").window.document,
+});
+---
+
+<div class="plot-figure overflow-x-auto" set:html={plot.outerHTML} />

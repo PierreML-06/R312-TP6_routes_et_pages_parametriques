@@ -1,0 +1,124 @@
+---
+import Layout from "../layouts/Layout.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import Encart from "../components/ui/Encart.astro";
+import GraphiqueEspece from "../components/GraphiqueEspece.astro";
+import GraphiqueCylindres from "../components/GraphiqueCylindres.astro";
+import GraphiqueMarche from "../components/GraphiqueMarche.astro";
+import GraphiqueClimat from "../components/GraphiqueClimat.astro";
+import GraphiqueAthletes from "../components/GraphiqueAthletes.astro";
+import GraphiqueDiamants from "../components/GraphiqueDiamants.astro";
+import GraphiqueMeteo from "../components/GraphiqueMeteo.astro";
+import penguins from "../data/penguins.json";
+import cars from "../data/cars.json";
+import { jeux } from "../data/jeux.js";
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const cylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+
+const modes = [
+  { label: "Onglets", cle: "onglets" },
+  { label: "Dynamique", cle: "dynamique" },
+  { label: "Statique", cle: "statique" },
+];
+
+/* Aperçu complet d'un jeu = composant appelé sans valeur (nouveaux jeux). */
+const apercus = {
+  marches: GraphiqueMarche,
+  climat: GraphiqueClimat,
+  athletes: GraphiqueAthletes,
+  diamants: GraphiqueDiamants,
+  meteo: GraphiqueMeteo,
+};
+
+const resumes = {
+  manchots: `${especes.length} espèces, ${penguins.length} individus`,
+  voitures: `${cars.length} modèles, ${cylindres.length} valeurs de cylindres`,
+};
+
+const manieres = [
+  {
+    titre: "Onglets",
+    texte: "Une seule page contient tous les graphiques. Les onglets se contentent d'afficher l'un et de masquer les autres.",
+    code: "especes.map((e) => <Graphique species={e} />)",
+  },
+  {
+    titre: "Rendu dynamique",
+    texte: "Le serveur calcule la page à chaque requête. Le paramètre de l'URL est lu dans Astro.params.",
+    code: "export const prerender = false;",
+  },
+  {
+    titre: "Rendu statique",
+    texte: "Astro produit un fichier HTML par valeur au moment du build, à partir de la liste donnée par getStaticPaths.",
+    code: "export function getStaticPaths() { ... }",
+  },
+];
+---
+
+<Layout title="Accueil" description="Routes et pages paramétriques avec Astro : onglets, rendu dynamique ou rendu statique.">
+  <PageHeader
+    surtitre="R312 · TP6"
+    titre="Une page par valeur, trois façons de la produire"
+    intro="Ce TP présente sept jeux de données, chacun de trois manières avec Astro : tout sur une page en onglets, une page calculée à la demande, ou une page générée une fois pour toutes au build."
+  />
+
+  <section class="grid gap-6 md:grid-cols-2" aria-label="Jeux de données">
+    {
+      jeux.map((jeu) => {
+        const Apercu = apercus[jeu.slug];
+        return (
+          <article class="carte flex flex-col gap-5">
+            <div>
+              <div class="flex items-start justify-between gap-3">
+                <h2 class="font-serif text-2xl tracking-tight text-stone-900">{jeu.titre}</h2>
+                <span class="mt-1.5 whitespace-nowrap rounded-full bg-stone-100 px-2.5 py-0.5 text-xs uppercase tracking-wider text-stone-600">
+                  {jeu.graphique}
+                </span>
+              </div>
+              {resumes[jeu.slug] && <p class="mt-1 text-sm text-teal-700">{resumes[jeu.slug]}</p>}
+              <p class="mt-2 text-stone-600">{jeu.description}</p>
+              <p class="mt-2 text-sm text-stone-500">
+                Paramètre de route : <code class="code-inline">{`/[${jeu.parametre}]`}</code>
+              </p>
+            </div>
+            <div
+              class:list={[
+                "grid gap-2",
+                jeu.slug === "manchots" ? "grid-cols-3" : jeu.slug === "voitures" ? "grid-cols-5" : "grid-cols-1",
+              ]}
+              aria-hidden="true"
+            >
+              {jeu.slug === "manchots" && especes.map((e) => <GraphiqueEspece species={e} compact />)}
+              {jeu.slug === "voitures" && cylindres.map((n) => <GraphiqueCylindres cylinders={n} compact />)}
+              {Apercu && <Apercu compact />}
+            </div>
+            <ul class="mt-auto flex flex-wrap gap-x-5 gap-y-2 border-t border-stone-200 pt-4">
+              {modes.map((m) => (
+                <li>
+                  <a href={jeu.liens[m.cle]} class="lien-fleche">{m.label}</a>
+                </li>
+              ))}
+            </ul>
+          </article>
+        );
+      })
+    }
+  </section>
+
+  <section class="mt-24" aria-labelledby="trois-facons">
+    <h2 id="trois-facons" class="font-serif text-3xl tracking-tight text-stone-900">Trois façons de faire</h2>
+    <div class="mt-8 grid gap-10 md:grid-cols-3">
+      {
+        manieres.map((m) => (
+          <div class="flex flex-col gap-3">
+            <h3 class="text-base font-medium text-stone-900">{m.titre}</h3>
+            <p class="text-sm leading-relaxed text-stone-600">{m.texte}</p>
+            <Encart titre="Extrait" ton="code">
+              <pre><code>{m.code}</code></pre>
+            </Encart>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</Layout>

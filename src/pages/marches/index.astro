@@ -1,0 +1,45 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueMarche from "../../components/GraphiqueMarche.astro";
+import stocks from "../../data/stocks.json";
+
+const valeurs = [...new Set(stocks.map((d) => d.symbol))].sort();
+const items = valeurs.map((v) => ({ id: `marches-${v}`, label: `${v}` }));
+---
+
+<Layout title="Marchés · Onglets" description="Cours de clôture de chaque action. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible.">
+  <PageHeader
+    surtitre="Marchés · Onglets"
+    titre="Les marchés, action par action"
+    intro="Cours de clôture de chaque action. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="marches" />
+  </PageHeader>
+
+  <Onglets items={items} label="Symbole boursier">
+    {
+      valeurs.map((v) => (
+        <div data-onglet={`marches-${v}`}>
+          <div class="carte">
+            <GraphiqueMarche valeur={String(v)} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        La liste est calculée automatiquement à partir des données : <code class="code-inline">{"[...new Set(stocks.map((d) => d.symbol))].sort()"}</code>.
+        <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons, puis
+        <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
+      </p>
+      <p class="mt-3">Marque Plot utilisée : Plot.lineY dessine la courbe du cours dans le temps ; Plot.areaY ajoute une surface légère dessous et Plot.ruleY([0]) trace la ligne de base.</p>
+    </Encart>
+  </div>
+</Layout>

@@ -1,0 +1,51 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueDiamants from "../../components/GraphiqueDiamants.astro";
+import diamants from "../../data/diamonds.json";
+
+const ordre = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+const valeurs = [...new Set(diamants.map((d) => d.cut))].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+const items = valeurs.map((v) => ({ id: `cut-${slug(v)}`, label: ((v) => v)(v) }));
+---
+
+<Layout title="Diamants · Onglets" description="Prix médian par couleur pour chaque qualité de taille, de Fair à Ideal.">
+  <PageHeader
+    surtitre="Diamants · Onglets"
+    titre="Les diamants, selon leur taille"
+    intro="Prix médian par couleur pour chaque qualité de taille, de Fair à Ideal. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="diamants" />
+  </PageHeader>
+
+  <Onglets items={items} label="Taille">
+    {
+      valeurs.map((v) => (
+        <div data-onglet={`cut-${slug(v)}`}>
+          <div class="carte">
+            <GraphiqueDiamants valeur={v} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12 grid gap-6 lg:grid-cols-2">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        La liste des tailles est calculée avec <code class="code-inline">[...new Set(diamants.map((d) => d.cut))]</code> :
+        <code class="code-inline">map</code> extrait la colonne et <code class="code-inline">Set</code> supprime les doublons. Le <code class="code-inline">sort</code> suit l'ordre de qualité croissante, pas l'ordre alphabétique.
+        « Very Good » contient un espace : l'URL utilise le slug <code class="code-inline">very-good</code> et les identifiants d'onglets n'ont jamais d'espace.
+      </p>
+    </Encart>
+    <Encart titre="La marque Plot utilisée" ton="info">
+      <p>
+        La marque <code class="code-inline">Plot.barY</code> dessine des barres ; avec <code class="code-inline">Plot.groupX</code>, les diamants sont regroupés par couleur et la barre affiche le prix <em>médian</em> du groupe. Seuls des agrégats sont dessinés, jamais les 54 000 diamants.
+      </p>
+    </Encart>
+  </div>
+</Layout>

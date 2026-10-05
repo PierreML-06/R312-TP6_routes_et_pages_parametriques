@@ -1,0 +1,44 @@
+---
+import Layout from "../layouts/Layout.astro";
+import PageHeader from "../components/ui/PageHeader.astro";
+import ModeSwitch from "../components/ui/ModeSwitch.astro";
+import Onglets from "../components/ui/Onglets.astro";
+import Encart from "../components/ui/Encart.astro";
+import GraphiqueEspece from "../components/GraphiqueEspece.astro";
+import penguins from "../data/penguins.json";
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const items = especes.map((e) => ({ id: e, label: e }));
+---
+
+<Layout title="Manchots · Onglets" description="Tous les graphiques des manchots sur une seule page, en onglets.">
+  <PageHeader
+    surtitre="Manchots · Onglets"
+    titre="Les manchots, espèce par espèce"
+    intro="Tous les graphiques sont rendus dans la même page. Les onglets ne font que les afficher ou les masquer."
+  >
+    <ModeSwitch dataset="manchots" />
+  </PageHeader>
+
+  <Onglets items={items} label="Espèces de manchots">
+    {
+      especes.map((espece) => (
+        <div data-onglet={espece}>
+          <div class="carte">
+            <GraphiqueEspece species={espece} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        La liste des espèces est calculée avec <code class="code-inline">[...new Set(penguins.map((d) => d.species))]</code> :
+        <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons.
+        Les onglets et les panneaux sont ensuite produits par un second <code class="code-inline">map</code>.
+      </p>
+    </Encart>
+  </div>
+</Layout>

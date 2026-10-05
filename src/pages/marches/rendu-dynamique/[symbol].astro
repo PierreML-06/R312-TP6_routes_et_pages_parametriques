@@ -1,0 +1,42 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueMarche from "../../../components/GraphiqueMarche.astro";
+import stocks from "../../../data/stocks.json";
+
+const { symbol } = Astro.params;
+const valeurs = [...new Set(stocks.map((d) => d.symbol))].sort();
+
+// Valeur absente de la liste : on répond directement 404.
+if (!valeurs.some((v) => String(v) === symbol)) {
+  return new Response("Symbole inconnu", { status: 404 });
+}
+
+const items = valeurs.map((v) => ({
+  href: `/marches/rendu-dynamique/${v}`,
+  label: `${v}`,
+  actif: String(v) === symbol,
+}));
+---
+
+<Layout title={`{symbol} · Rendu dynamique`}>
+  <PageHeader surtitre="Marchés · Rendu dynamique" titre={`{symbol}`}>
+    <ModeSwitch dataset="marches" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer d'action" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueMarche valeur={symbol} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/marches/rendu-dynamique" class="lien-fleche">Retour à la liste des actions</a>
+  </p>
+</Layout>

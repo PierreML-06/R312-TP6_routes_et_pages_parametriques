@@ -1,0 +1,151 @@
+---
+import "../styles/global.css";
+
+/* Props : title (obligatoire), description (facultative). */
+const { title, description } = Astro.props;
+
+import { jeux } from "../data/jeux.js";
+
+const pathname = Astro.url.pathname;
+const commencePar = (p: string) =>
+  pathname === p || pathname.startsWith(p + "/");
+
+// Un jeu est courant si le pathname commence par l'un de ses 3 liens.
+const jeuxNav = jeux.map((j) => ({
+  ...j,
+  actif: Object.values(j.liens).some(commencePar),
+}));
+const jeuCourant = jeuxNav.find((j) => j.actif);
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    {description && <meta name="description" content={description} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title} · TP6 Routes paramétriques</title>
+  </head>
+  <body class="min-h-screen">
+    <header class="sticky top-0 z-30 border-b border-stone-200 bg-white/80 backdrop-blur">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <a href="/" class="flex items-center gap-2 text-stone-900">
+          <span class="font-serif text-lg tracking-tight sm:text-xl">TP6</span>
+          <span class="hidden text-sm text-stone-500 sm:inline">Routes paramétriques</span>
+        </a>
+        <nav aria-label="Navigation principale">
+          <ul class="flex items-center gap-1">
+            <li>
+              <a
+                href="/"
+                aria-current={pathname === "/" ? "page" : undefined}
+                class:list={[
+                  "block rounded-md px-3 py-1.5 text-sm transition-colors",
+                  pathname === "/"
+                    ? "bg-teal-50 font-medium text-teal-700"
+                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+                ]}
+              >
+                Accueil
+              </a>
+            </li>
+            <li class="relative" data-menu-jeux>
+              <button
+                type="button"
+                aria-expanded="false"
+                aria-controls="liste-jeux"
+                aria-haspopup="true"
+                class:list={[
+                  "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors",
+                  jeuCourant
+                    ? "bg-teal-50 font-medium text-teal-700"
+                    : "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+                ]}
+              >
+                <span>Jeux de données</span>
+                {jeuCourant && (
+                  <span class="hidden font-normal text-teal-700/70 md:inline">· {jeuCourant.titre}</span>
+                )}
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" class="fleche-menu transition-transform">
+                  <path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+              </button>
+              <ul
+                id="liste-jeux"
+                hidden
+                class="absolute right-0 top-full z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-1.5"
+              >
+                {
+                  jeuxNav.map((j) => (
+                    <li>
+                      <a
+                        href={j.liens.onglets}
+                        aria-current={j.actif ? "page" : undefined}
+                        class:list={[
+                          "flex items-baseline justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                          j.actif
+                            ? "bg-teal-50 font-medium text-teal-700"
+                            : "text-stone-700 hover:bg-stone-100 hover:text-stone-900",
+                        ]}
+                      >
+                        <span>{j.titre}</span>
+                        <span class="text-xs font-normal text-stone-500">{j.graphique}</span>
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
+      <slot />
+    </main>
+
+    <footer class="border-t border-stone-200 py-8 text-center text-xs text-stone-500">
+      R312 · TP6 — Routes et pages paramétriques avec Astro
+    </footer>
+
+    <style>
+      [aria-expanded="true"] .fleche-menu {
+        transform: rotate(180deg);
+      }
+    </style>
+    <script>
+      // Menu déroulant « Jeux de données » : aria-expanded, Échap et clic dehors ferment.
+      const racine = document.querySelector("[data-menu-jeux]");
+      const bouton = racine?.querySelector("button");
+      const liste = racine?.querySelector("ul");
+      if (racine && bouton && liste) {
+        const ouvrir = (ouvert: boolean) => {
+          bouton.setAttribute("aria-expanded", String(ouvert));
+          liste.hidden = !ouvert;
+        };
+        bouton.addEventListener("click", () =>
+          ouvrir(bouton.getAttribute("aria-expanded") !== "true"),
+        );
+        document.addEventListener("click", (e) => {
+          if (!racine.contains(e.target as Node)) ouvrir(false);
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && bouton.getAttribute("aria-expanded") === "true") {
+            ouvrir(false);
+            bouton.focus();
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

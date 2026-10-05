@@ -1,0 +1,32 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import cars from "../../../data/cars.json";
+
+const cylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+const items = cylindres.map((n) => ({
+  href: `/voitures/rendu-dynamique/${n}`,
+  label: `${n} cylindres`,
+  detail: `${cars.filter((d) => d.cylinders === n).length} voitures`,
+}));
+---
+
+<Layout title="Rendu dynamique · Voitures">
+  <PageHeader surtitre="Voitures · Rendu dynamique" titre="Rendu dynamique" intro="Ces pages ne sont pas générées au build : le serveur produit le HTML à chaque requête, à partir du nombre de cylindres lu dans l'URL.">
+    <ModeSwitch dataset="voitures" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir un nombre de cylindres" />
+
+  <div class="mt-12">
+    <Encart titre="Page rendue à la demande" ton="info">
+      <p>Avec prerender = false, Astro calcule la page à chaque visite et lit le paramètre avec Astro.params.</p>
+      <pre><code>{"export const prerender = false;\nconst { cylinders } = Astro.params;"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

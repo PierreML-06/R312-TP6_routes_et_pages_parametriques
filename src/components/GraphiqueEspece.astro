@@ -1,0 +1,71 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import penguins from "../data/penguins.json";
+
+/* Props : species — espèce présente dans penguins.json ; compact — version mini (accueil). */
+const { species, compact = false } = Astro.props;
+
+const moyenne = (valeurs) => valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+
+/* Valeurs nulles écartées : un point sans mesure ne peut pas être placé. */
+const valides = penguins.filter((d) => d.culmen_length_mm != null && d.culmen_depth_mm != null);
+const data = valides.filter((d) => d.species === species);
+
+/* Domaine de couleur FIXE : une espèce garde sa couleur sur tous les graphiques. */
+const toutesEspeces = [...new Set(penguins.map((d) => d.species))];
+const couleurs = ["#0f766e", "#d97706", "#57534e"];
+
+/* Domaines x/y fixes calculés sur tout le dataset. */
+const [xMin, xMax] = [Math.min(...valides.map((d) => d.culmen_length_mm)), Math.max(...valides.map((d) => d.culmen_length_mm))];
+const [yMin, yMax] = [Math.min(...valides.map((d) => d.culmen_depth_mm)), Math.max(...valides.map((d) => d.culmen_depth_mm))];
+const domaineX = [Math.floor(xMin / 5) * 5, Math.ceil(xMax / 5) * 5];
+const domaineY = [Math.floor(yMin / 2) * 2, Math.ceil(yMax / 2) * 2];
+
+const masses = penguins.filter((d) => d.species === species && d.body_mass_g != null).map((d) => d.body_mass_g);
+const stats = [
+  { label: "Effectif", valeur: String(penguins.filter((d) => d.species === species).length) },
+  { label: "Bec, longueur moy.", valeur: `${moyenne(data.map((d) => d.culmen_length_mm)).toFixed(1)} mm` },
+  { label: "Bec, épaisseur moy.", valeur: `${moyenne(data.map((d) => d.culmen_depth_mm)).toFixed(1)} mm` },
+  { label: "Masse moyenne", valeur: `${Math.round(moyenne(masses))} g` },
+];
+
+const options = {
+  ariaLabel: `Nuage de points des manchots ${species}`,
+  marginTop: compact ? 6 : 16,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 48,
+  marginBottom: compact ? 6 : 44,
+  height: compact ? 120 : 380,
+  color: { domain: toutesEspeces, range: couleurs },
+  x: { domain: domaineX, label: "Longueur du bec (mm) →", axis: compact ? null : "bottom", grid: !compact },
+  y: { domain: domaineY, label: "↑ Épaisseur du bec (mm)", axis: compact ? null : "left", grid: !compact },
+  marks: [
+    Plot.dot(data, {
+      x: "culmen_length_mm",
+      y: "culmen_depth_mm",
+      stroke: "species",
+      fill: "species",
+      fillOpacity: 0.15,
+      r: compact ? 2 : 3.5,
+      title: (d) => `${d.species} · ${d.island}`,
+    }),
+  ],
+};
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

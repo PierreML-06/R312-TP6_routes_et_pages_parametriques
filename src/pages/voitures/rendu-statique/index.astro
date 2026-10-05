@@ -1,0 +1,30 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import cars from "../../../data/cars.json";
+
+const cylindres = [...new Set(cars.map((d) => d.cylinders))].sort((a, b) => a - b);
+const items = cylindres.map((n) => ({
+  href: `/voitures/rendu-statique/${n}`,
+  label: `${n} cylindres`,
+  detail: `${cars.filter((d) => d.cylinders === n).length} voitures`,
+}));
+---
+
+<Layout title="Rendu statique · Voitures">
+  <PageHeader surtitre="Voitures · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées au build : getStaticPaths() liste les nombres de cylindres et Astro produit un fichier HTML pour chacun.">
+    <ModeSwitch dataset="voitures" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir un nombre de cylindres" />
+
+  <div class="mt-12">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des valeurs du paramètre ; une page est créée pour chacune.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return cylindres.map((n) => ({ params: { cylinders: String(n) } }));\n}"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

@@ -1,0 +1,54 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueDiamants from "../../../components/GraphiqueDiamants.astro";
+import diamants from "../../../data/diamonds.json";
+
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+
+// Appelée au build : une page HTML est produite pour chaque valeur (via son slug).
+export function getStaticPaths() {
+  const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+  const ordre = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+  const valeurs = [...new Set(diamants.map((d) => d.cut))].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+  return valeurs.map((v) => ({ params: { cut: slug(v) } }));
+}
+
+const { cut } = Astro.params;
+const ordre = ["Fair", "Good", "Very Good", "Premium", "Ideal"];
+const valeurs = [...new Set(diamants.map((d) => d.cut))].sort((a, b) => ordre.indexOf(a) - ordre.indexOf(b));
+
+// On retrouve la valeur d'origine à partir du slug de l'URL.
+const valeur = valeurs.find((v) => slug(v) === cut);
+
+// Slug absent de la liste : on répond directement 404.
+if (valeur === undefined) {
+  return new Response("Taille inconnue", { status: 404 });
+}
+
+const items = valeurs.map((v) => ({
+  href: `/diamants/rendu-statique/${slug(v)}`,
+  label: ((v) => v)(v),
+  actif: v === valeur,
+}));
+---
+
+<Layout title={`${((v) => v)(valeur)} · Rendu statique`}>
+  <PageHeader surtitre="Diamants · Rendu statique" titre={((v) => v)(valeur)}>
+    <ModeSwitch dataset="diamants" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer de taille" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueDiamants valeur={valeur} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/diamants/rendu-statique" class="lien-fleche">Retour à la liste des tailles</a>
+  </p>
+</Layout>

@@ -1,0 +1,32 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../components/ui/ChoixValeurs.astro";
+import Encart from "../../components/ui/Encart.astro";
+import penguins from "../../data/penguins.json";
+
+const especes = [...new Set(penguins.map((d) => d.species))];
+const items = especes.map((e) => ({
+  href: `/rendu-dynamique/${e}`,
+  label: e,
+  detail: `${penguins.filter((d) => d.species === e).length} manchots`,
+}));
+---
+
+<Layout title="Rendu dynamique · Manchots">
+  <PageHeader surtitre="Manchots · Rendu dynamique" titre="Rendu dynamique" intro="Ces pages ne sont pas générées au build : chaque requête exécute le code sur le serveur. L'espèce demandée est lue dans l'URL.">
+    <ModeSwitch dataset="manchots" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une espèce" />
+
+  <div class="mt-12">
+    <Encart titre="Page rendue à la demande" ton="info">
+      <p>Avec prerender = false, Astro calcule la page à chaque visite et lit le paramètre avec Astro.params.</p>
+      <pre><code>{"export const prerender = false;\nconst { species } = Astro.params;"}</code></pre>
+    </Encart>
+  </div>
+</Layout>

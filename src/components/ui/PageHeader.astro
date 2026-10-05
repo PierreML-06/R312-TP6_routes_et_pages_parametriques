@@ -1,0 +1,17 @@
+---
+/* Props : surtitre (facultatif), titre, intro (facultative). Slot facultatif sous l'intro. */
+const { surtitre, titre, intro } = Astro.props;
+---
+
+<header class="mb-10 sm:mb-14">
+  {
+    surtitre && (
+      <p class="mb-3 text-xs font-medium uppercase tracking-widest text-teal-700">{surtitre}</p>
+    )
+  }
+  <h1 class="font-serif text-4xl font-normal leading-[1.1] tracking-tight text-stone-900 sm:text-5xl">
+    {titre}
+  </h1>
+  {intro && <p class="mt-5 max-w-2xl text-lg leading-relaxed text-stone-600">{intro}</p>}
+  <div class="mt-6 empty:hidden"><slot /></div>
+</header>

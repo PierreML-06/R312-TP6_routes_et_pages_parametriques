@@ -1,0 +1,47 @@
+---
+export const prerender = false;
+
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import GraphiqueAthletes from "../../../components/GraphiqueAthletes.astro";
+import athletes from "../../../data/athletes.json";
+
+const slug = (v) => v.toLowerCase().replaceAll(" ", "-");
+
+const { sport } = Astro.params;
+const valeurs = [...new Set(athletes.map((d) => d.sport))].sort();
+
+// On retrouve la valeur d'origine à partir du slug de l'URL.
+const valeur = valeurs.find((v) => slug(v) === sport);
+
+// Slug absent de la liste : on répond directement 404.
+if (valeur === undefined) {
+  return new Response("Sport inconnu", { status: 404 });
+}
+
+const items = valeurs.map((v) => ({
+  href: `/athletes/rendu-dynamique/${slug(v)}`,
+  label: ((v) => v.charAt(0).toUpperCase() + v.slice(1))(v),
+  actif: v === valeur,
+}));
+---
+
+<Layout title={`${((v) => v.charAt(0).toUpperCase() + v.slice(1))(valeur)} · Rendu dynamique`}>
+  <PageHeader surtitre="Athlètes · Rendu dynamique" titre={((v) => v.charAt(0).toUpperCase() + v.slice(1))(valeur)}>
+    <ModeSwitch dataset="athletes" />
+  </PageHeader>
+
+  <div class="mb-6">
+    <ChoixValeurs items={items} variante="pastilles" titre="Changer de sport" />
+  </div>
+
+  <div class="carte">
+    <GraphiqueAthletes valeur={valeur} />
+  </div>
+
+  <p class="mt-8">
+    <a href="/athletes/rendu-dynamique" class="lien-fleche">Retour à la liste des sports</a>
+  </p>
+</Layout>

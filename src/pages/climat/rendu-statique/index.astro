@@ -1,0 +1,31 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import PageHeader from "../../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../../components/ui/ModeSwitch.astro";
+import ChoixValeurs from "../../../components/ui/ChoixValeurs.astro";
+import Encart from "../../../components/ui/Encart.astro";
+import climate from "../../../data/climate.json";
+
+const valeurs = [...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b);
+const items = valeurs.map((v) => ({
+  href: `/climat/rendu-statique/${v}`,
+  label: `Années ${v}`,
+  detail: `${climate.filter((d) => Math.floor(d.year / 10) * 10 === v).length} années`,
+}));
+---
+
+<Layout title="Rendu statique · Climat">
+  <PageHeader surtitre="Climat · Rendu statique" titre="Rendu statique" intro="Ces pages sont générées au build : getStaticPaths() liste les décennies et Astro produit un fichier HTML pour chacun.">
+    <ModeSwitch dataset="climat" />
+  </PageHeader>
+
+  <ChoixValeurs items={items} variante="cartes" titre="Choisir une décennie" />
+
+  <div class="mt-12">
+    <Encart titre="Pages générées au build" ton="info">
+      <p>getStaticPaths() renvoie la liste des valeurs du paramètre ; une page est créée pour chacune.</p>
+      <pre><code>{"export function getStaticPaths() {\n  return valeurs.map((v) => ({ params: { decennie: String(v) } }));\n}"}</code></pre>
+      <p class="mt-3">Marque Plot utilisée : Plot.barY dessine une barre par année (x en bande) dont la hauteur est l'anomalie ; la couleur est bleue sous zéro, rouge au-dessus, et Plot.ruleY([0]) trace la référence.</p>
+    </Encart>
+  </div>
+</Layout>

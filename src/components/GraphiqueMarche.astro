@@ -1,0 +1,82 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import stocks from "../data/stocks.json";
+
+/* Props : valeur — symbole boursier (absent = aperçu de toutes les actions) ; compact — version mini (accueil). */
+const { valeur, compact = false } = Astro.props;
+
+/* La date est une chaîne "YYYY-MM-DD" dans le JSON : on la convertit en Date. */
+const tous = stocks.map((d) => ({ ...d, date: new Date(d.date) }));
+
+/* Domaine de couleur FIXE sur tous les symboles : une action garde sa couleur partout. */
+const symboles = [...new Set(stocks.map((d) => d.symbol))].sort();
+const palette = ["#0f766e", "#d97706", "#292524", "#14b8a6", "#a8a29e"];
+const couleurs = symboles.map((_, i) => palette[i % palette.length]);
+
+const data = valeur ? tous.filter((d) => d.symbol === valeur) : tous;
+
+/* Sans valeur : cours normalisés (base 100 au premier jour) pour comparer des actions de prix différents. */
+const base = Object.fromEntries(symboles.map((s) => [s, tous.find((d) => d.symbol === s).close]));
+const normalise = tous.map((d) => ({ ...d, indice: (d.close / base[d.symbol]) * 100 }));
+
+const cours = data.map((d) => d.close);
+const premier = data[0]?.close;
+const dernier = data.at(-1)?.close;
+const stats = valeur
+  ? [
+      { label: "Premier cours", valeur: `${premier.toFixed(2)} $` },
+      { label: "Dernier cours", valeur: `${dernier.toFixed(2)} $` },
+      { label: "Variation", valeur: `${(((dernier - premier) / premier) * 100).toFixed(1)} %` },
+      { label: "Maximum", valeur: `${Math.max(...cours).toFixed(2)} $` },
+    ]
+  : [];
+
+const commun = {
+  marginTop: compact ? 6 : 16,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 56,
+  marginBottom: compact ? 6 : 36,
+  height: compact ? 120 : 380,
+  color: { domain: symboles, range: couleurs, legend: !compact && !valeur },
+  x: { type: "utc", label: null, axis: compact ? null : "bottom" },
+};
+
+const options = valeur
+  ? {
+      ...commun,
+      ariaLabel: `Cours de clôture de ${valeur}`,
+      y: { label: "↑ Cours de clôture ($)", axis: compact ? null : "left", grid: !compact },
+      marks: [
+        // areaY : surface légère sous la courbe ; lineY : la courbe elle-même.
+        Plot.areaY(data, { x: "date", y: "close", fill: "symbol", fillOpacity: 0.12 }),
+        Plot.lineY(data, { x: "date", y: "close", stroke: "symbol", strokeWidth: compact ? 1.5 : 2 }),
+        Plot.ruleY([0]),
+      ],
+    }
+  : {
+      ...commun,
+      ariaLabel: "Cours normalisés de toutes les actions",
+      y: { label: "↑ Indice (base 100)", axis: compact ? null : "left", grid: !compact },
+      marks: [
+        Plot.lineY(normalise, { x: "date", y: "indice", stroke: "symbol", strokeWidth: compact ? 1.5 : 1.75 }),
+        Plot.ruleY([0]),
+      ],
+    };
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && stats.length > 0 && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>

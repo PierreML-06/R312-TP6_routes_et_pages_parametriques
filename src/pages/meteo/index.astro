@@ -1,0 +1,51 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import PageHeader from "../../components/ui/PageHeader.astro";
+import ModeSwitch from "../../components/ui/ModeSwitch.astro";
+import Onglets from "../../components/ui/Onglets.astro";
+import Encart from "../../components/ui/Encart.astro";
+import GraphiqueMeteo from "../../components/GraphiqueMeteo.astro";
+import meteo from "../../data/seattle-weather.json";
+
+const annees = [...new Set(meteo.map((d) => d.date.slice(0, 4)))].sort();
+const items = annees.map((a) => ({ id: `annee-${a}`, label: a }));
+---
+
+<Layout title="Météo · Onglets" description="Températures maximales quotidiennes à Seattle, année par année.">
+  <PageHeader
+    surtitre="Météo · Onglets"
+    titre="La météo de Seattle, année par année"
+    intro="Température maximale de chaque jour, de 2012 à 2015. Tous les graphiques sont dans la page ; les onglets choisissent celui qui est visible."
+  >
+    <ModeSwitch dataset="meteo" />
+  </PageHeader>
+
+  <Onglets items={items} label="Année">
+    {
+      annees.map((a) => (
+        <div data-onglet={`annee-${a}`}>
+          <div class="carte">
+            <GraphiqueMeteo valeur={a} />
+          </div>
+        </div>
+      ))
+    }
+  </Onglets>
+
+  <div class="mt-12 grid gap-6 md:grid-cols-2">
+    <Encart titre="Comment sont générés les onglets ?" ton="info">
+      <p>
+        Les années sont calculées avec <code class="code-inline">[...new Set(meteo.map((d) => d.date.slice(0, 4)))]</code> :
+        <code class="code-inline">map</code> extrait l'année de chaque date, <code class="code-inline">Set</code> supprime les doublons, puis
+        <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
+      </p>
+    </Encart>
+    <Encart titre="La marque Plot.cell" ton="info">
+      <p>
+        <code class="code-inline">Plot.cell</code> dessine un rectangle par donnée, positionné par <code class="code-inline">x</code> et
+        <code class="code-inline">y</code> (ici le jour et le mois) et coloré par <code class="code-inline">fill</code> (la température max).
+        C'est ce qui donne une carte de chaleur.
+      </p>
+    </Encart>
+  </div>
+</Layout>

@@ -1,0 +1,70 @@
+---
+import PlotFigure from "./PlotFigure.astro";
+import * as Plot from "@observablehq/plot";
+import athletes from "../data/athletes.json";
+
+/* Props : valeur — nom du sport (absente : tout le jeu) ; compact — version mini (accueil). */
+const { valeur, compact = false } = Astro.props;
+
+const moyenne = (valeurs) => valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+const libelleSexe = { female: "Femmes", male: "Hommes" };
+
+/* Tailles nulles écartées : on ne peut pas les ranger dans une classe. */
+const valides = athletes.filter((d) => d.height != null);
+const data = valeur ? valides.filter((d) => d.sport === valeur) : valides;
+
+/* Domaine x fixe sur tout le jeu : tous les sports sont comparables. */
+const domaineX = [
+  Math.floor(Math.min(...valides.map((d) => d.height)) * 10) / 10,
+  Math.ceil(Math.max(...valides.map((d) => d.height)) * 10) / 10,
+];
+
+const femmes = data.filter((d) => d.sex === "female");
+const hommes = data.filter((d) => d.sex === "male");
+const tailleMoy = (liste) => (liste.length ? `${moyenne(liste.map((d) => d.height)).toFixed(2)} m` : "–");
+
+const stats = [
+  { label: "Effectif", valeur: `${data.length} athlètes` },
+  { label: "Taille moy. femmes", valeur: tailleMoy(femmes) },
+  { label: "Taille moy. hommes", valeur: tailleMoy(hommes) },
+  { label: "Part de femmes", valeur: `${Math.round((femmes.length / data.length) * 100)} %` },
+];
+
+const options = {
+  ariaLabel: valeur ? `Histogramme des tailles en ${valeur}` : "Histogramme des tailles de tous les athlètes",
+  marginTop: compact ? 6 : 16,
+  marginRight: compact ? 6 : 16,
+  marginLeft: compact ? 6 : 48,
+  marginBottom: compact ? 6 : 44,
+  height: compact ? 120 : 380,
+  color: {
+    domain: ["female", "male"],
+    range: ["#d97706", "#0f766e"],
+    legend: !compact,
+    tickFormat: (d) => libelleSexe[d],
+  },
+  x: { domain: domaineX, label: "Taille (m) →", axis: compact ? null : "bottom" },
+  y: { label: "↑ Nombre d'athlètes", axis: compact ? null : "left", grid: !compact },
+  marks: [
+    /* binX regroupe les tailles en classes de 5 cm ; l'effectif est empilé par sexe. */
+    Plot.rectY(data, Plot.binX({ y: "count" }, { x: "height", fill: "sex", interval: 0.05 })),
+    Plot.ruleY([0]),
+  ],
+};
+---
+
+<div>
+  <PlotFigure options={options} />
+  {
+    !compact && (
+      <dl class="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-stone-200 pt-4 sm:grid-cols-4">
+        {stats.map((s) => (
+          <div>
+            <dt class="text-xs uppercase tracking-wider text-stone-500">{s.label}</dt>
+            <dd class="mt-1 text-lg font-medium text-stone-900">{s.valeur}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+</div>
