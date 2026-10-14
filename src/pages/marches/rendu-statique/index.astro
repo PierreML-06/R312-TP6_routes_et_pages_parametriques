@@ -24,8 +24,9 @@ const items = valeurs.map((v) => ({
   <div class="mt-12">
     <Encart titre="Pages générées au build" ton="info">
       <p>getStaticPaths() renvoie la liste des valeurs du paramètre ; une page est créée pour chacune.</p>
-      <pre><code>{"export function getStaticPaths() {\n  return valeurs.map((v) => ({ params: { symbol: String(v) } }));\n}"}</code></pre>
-      <p class="mt-3">Marque Plot utilisée : Plot.lineY dessine la courbe du cours dans le temps ; Plot.areaY ajoute une surface légère dessous et Plot.ruleY([0]) trace la ligne de base.</p>
+      <pre><code>{`export function getStaticPaths() {
+  return valeurs.map((v) => ({ params: { symbol: String(v) } }));
+}`}</code></pre>
     </Encart>
   </div>
 </Layout>

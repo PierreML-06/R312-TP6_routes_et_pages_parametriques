@@ -35,11 +35,11 @@ const items = valeurs.map((v) => ({ id: `climat-${v}`, label: `Années ${v}` }))
   <div class="mt-12">
     <Encart titre="Comment sont générés les onglets ?" ton="info">
       <p>
-        La liste est calculée automatiquement à partir des données : <code class="code-inline">{"[...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))].sort((a, b) => a - b)"}</code>.
+        La liste est calculée avec <code class="code-inline">[...new Set(climate.map((d) => Math.floor(d.year / 10) * 10))]</code> :
         <code class="code-inline">map</code> extrait la colonne, <code class="code-inline">Set</code> supprime les doublons, puis
         <code class="code-inline">sort</code> les range. Un second <code class="code-inline">map</code> produit les onglets et les panneaux.
       </p>
-      <p class="mt-3">Marque Plot utilisée : Plot.barY dessine une barre par année (x en bande) dont la hauteur est l'anomalie ; la couleur est bleue sous zéro, rouge au-dessus, et Plot.ruleY([0]) trace la référence.</p>
+      <p class="mt-3">Plot.barY dessine une barre par année (x en bande) dont la hauteur est l'anomalie ; la couleur est bleue sous zéro, rouge au-dessus, et Plot.ruleY([0]) trace la référence.</p>
     </Encart>
   </div>
 </Layout>
